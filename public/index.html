@@ -54,16 +54,12 @@
       <span class="name">pdf-editor-ocr-full.html</span><span class="pill ok">works offline · OCR</span>
       <div class="meta">Editing plus OCR, all inlined (model, worker, and WASM core) — runs fully offline. Largest file, best OCR accuracy.</div>
     </a>
-    <a class="build" href="pdf-editor-ocr-fast.html">
-      <span class="name">pdf-editor-ocr-fast.html</span><span class="pill warn">OCR not working yet</span>
-      <div class="meta">Editing works. OCR is incomplete — none of the OCR engine is bundled. See the audit.</div>
-    </a>
   </div>
 
   <footer>
     Verify everything: each editor has a <strong>Verify privacy</strong> panel,
     works offline, and is hashed in <span style="font-family:ui-monospace,monospace">SHA256SUMS.txt</span>.
-    Why the OCR builds are labeled honestly rather than shipped as-if-working: see the audit note in the repo.
+    Why the OCR build is verified offline rather than taken on trust: see the audit note in the repo.
   </footer>
 </main>
 </body>

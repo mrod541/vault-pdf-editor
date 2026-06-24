@@ -17,7 +17,7 @@ isn't features — it's *provable privacy*. You verify the claim; you don't trus
    one permitted scheme is `blob:`, which lets the page read its **own** in-memory
    inlined data (a `blob:` URL points at bytes already in the tab, not a network
    address). Nothing leaves the device.
-2. **Everything inlined** — libraries (and, for a compliant OCR build, the OCR
+2. **Everything inlined** — libraries (and, for the OCR build, the OCR
    model/worker/core) are embedded in the single HTML file, so a finished build
    makes zero network requests and runs fully offline.
 3. **Verifiable** — an in-app "Verify privacy" panel, an offline test, and
@@ -29,13 +29,11 @@ isn't features — it's *provable privacy*. You verify the claim; you don't trus
 |-------|---------|-----|-------|
 | `pdf-editor-lean.html` | ✅ | — | Fully self-contained. Recommended default. |
 | `pdf-editor-ocr-full.html` | ✅ | ✅ offline | Model + worker + core all inlined. Verify with an offline OCR run. |
-| `pdf-editor-ocr-fast.html` | ✅ | ❌ not yet | No OCR assets inlined. See audit. |
 
 `ocr-full` runs OCR fully offline (model, worker, and WASM core all inlined) and
 is deployed live; the quickest proof is to open it, disconnect from the internet,
-and OCR a scan — verified working on the deployed site.
-`ocr-fast` still inlines none of its OCR assets and so remains flagged — its OCR
-fails *closed* (blocked by CSP, no leak). Details: [`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
+and OCR a scan — verified working on the deployed site. Details:
+[`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
 
 ## Layout
 

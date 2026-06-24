@@ -9,11 +9,9 @@ depending on who you are.
 
 > **Build status at a glance.** The privacy guarantee (`connect-src blob:` —
 > blocks every network destination; permits only reading the app's own inlined
-> data) holds for **all** builds — nothing can leave your device. `lean` and
+> data) holds for **both** builds — nothing can leave your device. `lean` and
 > `ocr-full` are complete and run fully offline (yes, OCR included in
-> `ocr-full`). `ocr-fast` is **not finished** — its OCR engine still expects to
-> load from the internet, which the privacy policy (correctly) blocks, so OCR
-> doesn't work there yet. Details: [`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
+> `ocr-full`). Details: [`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
 
 ---
 
@@ -26,8 +24,6 @@ at **https://vault-pdf-editor.mozilla614.workers.dev**:
   **Start here.** ✅
 - **`pdf-editor-ocr-full.html`** — editing plus OCR, fully inlined and working
   offline. Largest file, best OCR accuracy. ✅
-- **`pdf-editor-ocr-fast.html`** — intended for quick OCR, but OCR is **not
-  working yet** (none of the OCR engine is bundled). ⚠️
 
 Drop a PDF in, edit, save. Nothing uploads. Click **"Verify privacy"** in the
 app to prove it to yourself.
@@ -72,8 +68,8 @@ populated in this repo yet — see INSTRUCTIONS.)
 → Read [`docs/PROJECT_PROMPT.md`](docs/PROJECT_PROMPT.md) first. It explains the
 project's non-negotiable privacy invariants so you don't accidentally break them
 (e.g. by adding a CDN link or an analytics snippet). In particular, invariant 7
-(honesty over polish) is why the OCR builds above are labeled "not working yet"
-instead of being quietly shipped.
+(honesty over polish) means a feature that can't meet the invariants is made
+compliant or not shipped — never papered over with a reassuring label.
 
 ---
 
@@ -89,7 +85,7 @@ vault-pdf-editor/
 │   └── index.js               Worker: serves files + stamps security headers
 ├── public/                    what gets deployed (the editor builds)
 │   ├── index.html             landing page
-│   ├── pdf-editor-*.html      the three editors (lean works; OCR builds flagged)
+│   ├── pdf-editor-*.html      the two editors (lean + ocr-full)
 │   └── SHA256SUMS.txt         hashes for verification
 ├── docs/
 │   ├── INSTRUCTIONS.md        usage + deploy + build, all in one

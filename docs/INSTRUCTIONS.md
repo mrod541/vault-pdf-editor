@@ -23,7 +23,7 @@ section you need.
    Safari). You can open a local file directly, or visit your deployed site.
 2. Drop a PDF onto the page, or click **Choose a PDF**.
 3. Use the tools: Select, Add text, Draw, Highlight, Redact (and OCR in the OCR
-   builds). Page tools (Rotate / Delete) are above each page.
+   build). Page tools (Rotate / Delete) are above each page.
 4. Click **Save** to download an edited copy. The original is untouched.
 5. **Discard** clears the document from memory.
 
@@ -57,7 +57,7 @@ points at bytes already in the tab, not a network address, so nothing leaves you
 device.
 
 **2. Everything is inlined — nothing is fetched at runtime.**
-The libraries (pdf.js, pdf-lib, and for OCR builds tesseract.js + the language
+The libraries (pdf.js, pdf-lib, and for the OCR build tesseract.js + the language
 model) are embedded in the single HTML file. After load, a compliant build makes
 zero requests. You can run it fully offline.
 
@@ -93,20 +93,15 @@ string in the files, explained — and for the current per-build audit status.)
 |-------|------|-----|--------|----------|
 | `pdf-editor-lean.html` | ~1.9 MB | — | ✅ Verified self-contained | Default. Editing, markup, redaction, page ops. |
 | `pdf-editor-ocr-full.html` | ~26 MB | full | ✅ **Self-contained.** Model + worker + core all inlined; runs OCR offline. Verify with an offline run. See [`AUDIT_NOTE.md`](AUDIT_NOTE.md). | OCR on messy scans, best accuracy. |
-| `pdf-editor-ocr-fast.html` | ~5.8 MB | fast | ⚠️ **OCR not working yet.** No OCR assets inlined; see [`AUDIT_NOTE.md`](AUDIT_NOTE.md). | Don't rely on its OCR until rebuilt. |
 
 The lean build is the verified, recommended default and works fully offline.
 
-`pdf-editor-ocr-full.html` now inlines all three OCR assets — language model,
+`pdf-editor-ocr-full.html` inlines all three OCR assets — language model,
 worker, and the tesseract.js **WebAssembly core** (5.1.0 simd-lstm) — and wires
 each to an in-worker blob, so OCR runs fully offline. The quickest proof is to
 open it, disconnect from the internet, and OCR a scan.
 
-`pdf-editor-ocr-fast.html` still inlines none of its OCR assets; they default to
-a CDN and are blocked by the CSP, so its OCR doesn't work yet. It fails *closed*
-(no leak) and stays flagged until rebuilt the same way `ocr-full` was.
-
-Privacy holds for all three. Full per-build detail — including exactly how the
+Privacy holds for both builds. Full per-build detail — including exactly how the
 core is inlined and why the leftover CDN strings are dead branches — is in
 [`AUDIT_NOTE.md`](AUDIT_NOTE.md).
 
@@ -179,7 +174,7 @@ build time.
 
 ```bash
 # from the build source (see the /build folder)
-python3 build.py all        # or: lean / ocr-fast / ocr-full
+python3 build.py all        # or: lean / ocr-full
 ```
 
 This reads `template.html`, `app.css`, `app.js`, and the inlined libraries in
@@ -196,8 +191,7 @@ published ones (barring intentional edits).
 
 > **Note:** the `build/` source (template, css, js, and inlined library assets)
 > is not yet in this repo — only the generated editor files are. Adding the
-> build source is required to make the OCR builds reproducible and to fix the
-> flagged `ocr-fast` build by inlining its OCR assets.
+> build source is required to make the OCR build reproducible from source.
 
 ---
 
@@ -215,11 +209,8 @@ When you change the editor:
 ## Troubleshooting
 
 **OCR doesn't start.**
-`ocr-full` should OCR offline; if it stalls, open the browser console. `ocr-fast`
-is the one still-flagged build — it inlines none of its OCR assets, so the CSP
-correctly blocks its CDN fetch and OCR can't load there (see
-[`AUDIT_NOTE.md`](AUDIT_NOTE.md)). The lean build has no OCR machinery and always
-works — use it if you don't need OCR.
+`ocr-full` should OCR offline; if it stalls, open the browser console. The lean
+build has no OCR machinery and always works — use it if you don't need OCR.
 
 **The page looks blank or a tool does nothing.**
 Open DevTools -> Console for the error and check you're on a current browser.

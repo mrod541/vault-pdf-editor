@@ -14,15 +14,14 @@ If a file's hash doesn't match, this audit doesn't apply to it.
 |-------|----------------|------------------------------|--------|
 | `pdf-editor-lean.html` | ✅ yes | n/a (no OCR) | ✅ Fully self-contained |
 | `pdf-editor-ocr-full.html` | ✅ yes (CSP blocks egress) | ✅ yes — model + worker + core all inlined | ✅ Self-contained (offline test recommended) |
-| `pdf-editor-ocr-fast.html` | ✅ yes (CSP blocks egress) | ❌ no — nothing inlined | ⚠️ Not compliant |
 
-"Privacy holds" everywhere because `connect-src blob:` is present in every
-build. It blocks every network destination (any `http(s)://`/`ws://` server);
-the only thing it permits is the page reading its own in-memory inlined data via
-`blob:` URLs, which never touch the network. The OCR builds differ in whether OCR is
-genuinely *inlined and working* versus *broken because its assets can't be
-fetched*. Per invariant 7, a build whose OCR only "works" by reaching a CDN is
-not allowed to be advertised as a working offline OCR build.
+"Privacy holds" in both builds because `connect-src blob:` is present in each.
+It blocks every network destination (any `http(s)://`/`ws://` server); the only
+thing it permits is the page reading its own in-memory inlined data via `blob:`
+URLs, which never touch the network. Per invariant 7, a build whose OCR only
+"works" by reaching a CDN is not allowed to be advertised as a working offline
+OCR build — which is why the never-finished `ocr-fast` build (OCR assets left on
+a CDN, never inlined) was removed rather than shipped with a reassuring label.
 
 ## `pdf-editor-lean.html` — ✅ verified self-contained
 
@@ -104,20 +103,17 @@ The core files were obtained at build time via `npm pack tesseract.js-core@5.1.0
 5.0.4 — there is no 5.0.4 core). Build-time downloads are fine; runtime ones are
 the thing the project forbids.
 
-## `pdf-editor-ocr-fast.html` — ⚠️ not compliant (nothing inlined)
+## A note on the removed `ocr-fast` build
 
-The OCR engine uses tesseract.js's stock CDN paths for **all three** assets — it
-attempts to fetch from the public internet at first use:
-
-- worker — `cdn.jsdelivr.net/npm/tesseract.js@v.../dist/worker.min.js`
-- WASM core — `cdn.jsdelivr.net/npm/tesseract.js-core@v...`
-- language model — `cdn.jsdelivr.net/npm/@tesseract.js-data/.../*.traineddata`
-
-There is no inlined base64 blob for the core or model and no `corePath`/`langPath`/
-`workerPath` override to local sources. Breaks invariant 3 (and invariant 7 if
-advertised as working). `connect-src blob:` blocks the remote fetches, so no data leaks, but OCR does
-not function. Same remediation as `ocr-full`, plus inlining the model and worker
-that `ocr-full` already inlines.
+An earlier `pdf-editor-ocr-fast.html` build was removed from the project. It used
+tesseract.js's stock CDN paths for all three OCR assets — worker, WASM core, and
+language model — and inlined none of them, so it attempted to fetch from the
+public internet at first use. `connect-src blob:` blocked those fetches (no data
+leaked), but OCR simply never worked. Its header comment also falsely claimed the
+model was inlined — exactly the "reassuring label" invariant 7 forbids. Since
+inlining its assets would only have reproduced `ocr-full`, the build was retired
+rather than completed. If a genuinely lighter OCR variant is wanted later, it
+should be built and audited fresh.
 
 ## External-looking strings, explained
 
@@ -135,9 +131,11 @@ The editor files contain URLs that look like network endpoints. Categorized:
   *attempt* (invariant 4), meant to fail.
 - **Template-literal fragments** — `http://${...}` inside library code; string
   builders, not live endpoints.
-- **jsdelivr CDN URLs** — these are NOT inert. They are the OCR-asset fetches
-  described above: fully active in `ocr-fast`, and the WASM-core fetch in
-  `ocr-full`. They are the reason those builds are flagged.
+- **jsdelivr CDN URLs** — these appear in the bundled tesseract.js library as the
+  stock OCR-asset paths, but in `ocr-full` they are **dead branches**: the
+  worker, core, and model are each supplied from in-memory bytes before any fetch
+  fires (see above), and `connect-src blob:` blocks every remote destination
+  regardless.
 
 ## How to reproduce this audit
 
