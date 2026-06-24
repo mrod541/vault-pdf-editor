@@ -9,11 +9,14 @@
   ============================================================================
   This file makes a strong, browser-ENFORCED privacy guarantee, not a promise.
 
-  The Content-Security-Policy below contains `connect-src 'none'`, which tells
-  YOUR browser to block every fetch, XMLHttpRequest, WebSocket, and beacon this
-  page could attempt. If this page tried to upload your PDF anywhere, the
-  browser itself would refuse the connection. The guarantee is enforced by the
-  browser, and you can read the one line that enforces it — right here.
+  The Content-Security-Policy below contains `connect-src blob:`, which tells
+  YOUR browser to block every network destination — no fetch, XMLHttpRequest,
+  WebSocket, or beacon can reach any http(s):// or ws:// server. The lone
+  exception is `blob:`, which lets the page read its OWN in-memory data (the
+  inlined libraries); a blob: URL points at bytes already in this tab, not a
+  network address, so nothing leaves your device. If this page tried to upload
+  your PDF anywhere, the browser itself would refuse the connection. The
+  guarantee is enforced by the browser, and you can read the line — right here.
 
   Every library (pdf.js, pdf-lib) is inlined into this single
   file. Nothing is fetched at runtime. You can save this file and run it forever
@@ -30,7 +33,7 @@
                style-src 'self' 'unsafe-inline';
                img-src 'self' data: blob:;
                font-src 'self' data:;
-               connect-src 'none';
+               connect-src blob:;
                form-action 'none';
                base-uri 'none';
                object-src 'none';">
@@ -227,8 +230,8 @@ header { display:flex; align-items:center; gap:18px; padding:12px 18px; backgrou
     <p class="vp-lead">This isn't a promise — it's enforced by your browser, and you can check every claim below yourself.</p>
 
     <div class="vp-claim">
-      <div class="vp-c-head"><span class="vp-tick" id="tick-csp">●</span> The browser is blocking all network connections</div>
-      <p>This page ships a Content-Security-Policy with <code>connect-src 'none'</code>. That directive tells your browser to refuse every <code>fetch</code>, <code>XMLHttpRequest</code>, WebSocket, and beacon. Read it yourself in this file's <code>&lt;head&gt;</code>.</p>
+      <div class="vp-c-head"><span class="vp-tick" id="tick-csp">●</span> The browser blocks every network destination</div>
+      <p>This page ships a Content-Security-Policy with <code>connect-src blob:</code>. That blocks every network destination &mdash; no <code>fetch</code>, <code>XMLHttpRequest</code>, WebSocket, or beacon can reach any <code>http(s)://</code> or <code>ws://</code> server. The lone exception is <code>blob:</code>, which lets the page read its own in-memory data (the inlined libraries); a <code>blob:</code> URL is a pointer to bytes already in this tab, not a network address, so nothing leaves your device. Read it yourself in this file's <code>&lt;head&gt;</code>.</p>
       <button class="vp-test" id="test-fetch">Test it: try to phone home now</button>
       <div class="vp-test-out" id="fetch-out"></div>
     </div>
@@ -326,7 +329,7 @@ header { display:flex; align-items:center; gap:18px; padding:12px 18px; backgrou
    ----------------------------------------------------------------------------
    PRIVACY INSTRUMENTATION FIRST. Before anything else runs, we wrap every API
    the page could use to send data out. Two things are true at once:
-     1. The CSP `connect-src 'none'` makes the browser BLOCK these calls.
+     1. The CSP `connect-src blob:` makes the browser BLOCK these calls.
      2. This wrapper COUNTS any attempt, so the user sees a live tally.
    If the count is ever > 0, something tried to talk to the network and was
    stopped — and we surface that loudly rather than hide it.
@@ -608,7 +611,7 @@ if (ocrBtn && window.__VAULT_OCR_AVAILABLE) {
 }
 
 /* Tesseract wiring: all assets inlined, fed from memory via blob URLs so no
-   network fetch ever happens (works under connect-src 'none' and offline). */
+   network fetch ever happens (works under connect-src blob: and offline). */
 let _ocrWorker = null;
 async function runOCR(canvas, progress) {
   if (!_ocrWorker) {
