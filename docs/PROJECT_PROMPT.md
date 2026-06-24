@@ -17,10 +17,17 @@ serves that.
 1. **No network egress of user content, ever.** The user's PDF is processed only
    in the browser tab's memory. It is never uploaded, logged, cached to a
    server, or transmitted anywhere.
-2. **`connect-src 'none'` stays.** The Content-Security-Policy that blocks all
-   `fetch`/`XHR`/`WebSocket`/`beacon` is the heart of the guarantee. It appears
-   both as a meta tag in each HTML file and as an HTTP header from the Worker.
-   Do not weaken, remove, or add exceptions to it.
+2. **`connect-src blob:` stays (and means: no network egress).** The
+   Content-Security-Policy blocks every network destination — no
+   `fetch`/`XHR`/`WebSocket`/`beacon` may reach any `http(s)://` or `ws://`
+   server. It appears both as a meta tag in each HTML file and as an HTTP header
+   from the Worker, and the two must stay identical. The lone permitted scheme is
+   `blob:`, which lets the page read its **own** inlined data (a `blob:` URL is a
+   pointer to bytes already in the tab, not a network address); this is required
+   so the inlined OCR model/worker/core can load without any server. Do **not**
+   broaden this to allow `http(s):`/`ws:`/`data:` remote sources, and do not add
+   `'unsafe-eval'` (the WASM build needs only `'wasm-unsafe-eval'`). Narrowing
+   back toward `'none'` is fine **only** if OCR still loads its blobs.
 3. **Everything is inlined; nothing is fetched at runtime.** All libraries and
    assets are embedded in the single HTML file. After page load, zero network
    requests occur. The page must run fully offline. **Never add a CDN link, a
@@ -55,7 +62,9 @@ desktop/server engine and is out of scope for the client-side tool.
 `build.py` into self-contained `pdf-editor-*.html` → served by a Cloudflare
 Worker (`src/index.js`) that adds strict security headers. The browser enforces
 privacy via CSP; the user verifies via the in-app panel, the offline test, and
-hashes.
+hashes. *(Status: the `build/` generator is not yet populated — the shipped
+editors were produced by one-off patch scripts. Until `build.py` exists, the
+"rebuild from source" path is aspirational; see `build/README.md`.)*
 
 ## If you're an AI assistant
 
@@ -65,7 +74,8 @@ hashes.
   analytics pixel," "fetch the latest library from a CDN to save space," "POST
   the file to a server for better OCR." All of these break the core promise.
 - If asked to add a feature that needs external data, the compliant pattern is
-  to **inline the data** and keep `connect-src 'none'`. If that's not feasible,
-  say so plainly rather than compromising the guarantee.
+  to **inline the data** (and read it via a same-tab `blob:`), keeping
+  `connect-src blob:` with no remote sources. If that's not feasible, say so
+  plainly rather than compromising the guarantee.
 - After any editor change, remind the user to rebuild and refresh
   `SHA256SUMS.txt`.

@@ -44,13 +44,17 @@ Every editor file ships this in its `<head>`, and the Cloudflare Worker also
 sends it as a real HTTP header:
 
 ```
-Content-Security-Policy: ... connect-src 'none'; ...
+Content-Security-Policy: ... connect-src blob:; ...
 ```
 
-`connect-src 'none'` tells the browser to refuse every `fetch`,
-`XMLHttpRequest`, WebSocket, and `sendBeacon`. If the page tried to upload your
-file, the browser blocks the connection. The protection is the browser's, not a
-promise in the code.
+`connect-src blob:` tells the browser to block every network destination — no
+`fetch`, `XMLHttpRequest`, WebSocket, or `sendBeacon` can reach any
+`http(s)://` or `ws://` server. If the page tried to upload your file, the
+browser blocks the connection. The protection is the browser's, not a promise in
+the code. The one permitted scheme, `blob:`, lets the page read its **own**
+in-memory inlined data (the OCR model, worker, and WASM core); a `blob:` URL
+points at bytes already in the tab, not a network address, so nothing leaves your
+device.
 
 **2. Everything is inlined — nothing is fetched at runtime.**
 The libraries (pdf.js, pdf-lib, and for OCR builds tesseract.js + the language
@@ -88,25 +92,22 @@ string in the files, explained — and for the current per-build audit status.)
 | Build | Size | OCR | Status | Use when |
 |-------|------|-----|--------|----------|
 | `pdf-editor-lean.html` | ~1.9 MB | — | ✅ Verified self-contained | Default. Editing, markup, redaction, page ops. |
-| `pdf-editor-ocr-full.html` | ~16 MB | full | ⚠️ **OCR not working yet.** Model + worker inlined, but WASM core isn't; see [`AUDIT_NOTE.md`](AUDIT_NOTE.md). | Editing works today; OCR after the core is inlined. |
+| `pdf-editor-ocr-full.html` | ~26 MB | full | ✅ **Self-contained.** Model + worker + core all inlined; runs OCR offline. Verify with an offline run. See [`AUDIT_NOTE.md`](AUDIT_NOTE.md). | OCR on messy scans, best accuracy. |
 | `pdf-editor-ocr-fast.html` | ~5.8 MB | fast | ⚠️ **OCR not working yet.** No OCR assets inlined; see [`AUDIT_NOTE.md`](AUDIT_NOTE.md). | Don't rely on its OCR until rebuilt. |
 
 The lean build is the verified, recommended default and works fully offline.
 
-Both OCR builds are present in `public/`, and their **editing/markup/redaction
-features work** — but their **OCR does not work yet**, and they're labeled that
-way deliberately (invariant 7) rather than shipped as if functional.
+`pdf-editor-ocr-full.html` now inlines all three OCR assets — language model,
+worker, and the tesseract.js **WebAssembly core** (5.1.0 simd-lstm) — and wires
+each to an in-worker blob, so OCR runs fully offline. The quickest proof is to
+open it, disconnect from the internet, and OCR a scan.
 
-- `pdf-editor-ocr-full.html` is close: it inlines the language model and the OCR
-  worker and wires them to blob URLs, but it never overrides `corePath`, so the
-  tesseract.js **WebAssembly core** still defaults to a CDN. Under the CSP that
-  fetch is blocked, so privacy holds but OCR stops at "loading tesseract core."
-  The fix is to inline the core and set `corePath` to it.
-- `pdf-editor-ocr-fast.html` inlines none of the three OCR assets; all default to
-  the CDN and are blocked.
+`pdf-editor-ocr-fast.html` still inlines none of its OCR assets; they default to
+a CDN and are blocked by the CSP, so its OCR doesn't work yet. It fails *closed*
+(no leak) and stays flagged until rebuilt the same way `ocr-full` was.
 
-Privacy holds for all three (the OCR builds fail *closed* — OCR breaks rather
-than leaking). Full per-build detail and remediation steps are in
+Privacy holds for all three. Full per-build detail — including exactly how the
+core is inlined and why the leftover CDN strings are dead branches — is in
 [`AUDIT_NOTE.md`](AUDIT_NOTE.md).
 
 ---
@@ -148,7 +149,8 @@ Wrangler prints your live URL, e.g.
 - **`wrangler.jsonc`** points `assets.directory` at `./public` (the editor
   files) and sets `main` to the Worker at `src/index.js`.
 - **`src/index.js`** serves each requested file and adds the security headers —
-  including the header-level `connect-src 'none'` — to every response. Static
+  including the header-level `connect-src blob:` (kept byte-identical to each
+  editor's `<meta>` CSP) — to every response. Static
   assets are served from Cloudflare's edge; the Worker only runs to add headers
   and never sees your PDF (it never leaves your browser).
 
@@ -212,13 +214,12 @@ When you change the editor:
 
 ## Troubleshooting
 
-**OCR doesn't start (OCR builds).**
-On the current OCR builds this is expected and is the known flagged bug, not a
-problem on your end. `ocr-fast` inlines none of its OCR assets; `ocr-full`
-inlines the model and worker but not the WASM core. In both cases the CSP
-correctly blocks the leftover CDN fetch, so OCR can't load. See
-[`AUDIT_NOTE.md`](AUDIT_NOTE.md) for the fix. The lean build has no OCR machinery
-and always works — use it if you don't need OCR.
+**OCR doesn't start.**
+`ocr-full` should OCR offline; if it stalls, open the browser console. `ocr-fast`
+is the one still-flagged build — it inlines none of its OCR assets, so the CSP
+correctly blocks its CDN fetch and OCR can't load there (see
+[`AUDIT_NOTE.md`](AUDIT_NOTE.md)). The lean build has no OCR machinery and always
+works — use it if you don't need OCR.
 
 **The page looks blank or a tool does nothing.**
 Open DevTools -> Console for the error and check you're on a current browser.

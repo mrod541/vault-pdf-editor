@@ -7,24 +7,25 @@ enforces, not one you have to take on trust.
 If you read nothing else, read this page. It points you to the right next step
 depending on who you are.
 
-> **Build status at a glance.** The privacy guarantee (`connect-src 'none'`)
-> holds for **all** builds — nothing can leave your device. But the OCR builds
-> are **not finished**: their text-recognition engine still expects to load part
-> of itself from the internet, which the privacy policy (correctly) blocks, so
-> **OCR currently does not work** in those builds. Use the lean build today; the
-> OCR builds need a fix first. Details: [`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
+> **Build status at a glance.** The privacy guarantee (`connect-src blob:` —
+> blocks every network destination; permits only reading the app's own inlined
+> data) holds for **all** builds — nothing can leave your device. `lean` and
+> `ocr-full` are complete and run fully offline (yes, OCR included in
+> `ocr-full`). `ocr-fast` is **not finished** — its OCR engine still expects to
+> load from the internet, which the privacy policy (correctly) blocks, so OCR
+> doesn't work there yet. Details: [`docs/AUDIT_NOTE.md`](docs/AUDIT_NOTE.md).
 
 ---
 
 ## I just want to use it
 
-Open a file from `public/` directly in your browser, or visit the deployed site:
+Open a file from `public/` directly in your browser, or visit the deployed site
+at **https://vault-pdf-editor.mozilla614.workers.dev**:
 
 - **`pdf-editor-lean.html`** — everyday editing, smallest file, fully offline.
   **Start here.** ✅
-- **`pdf-editor-ocr-full.html`** — intended for best OCR accuracy, but OCR is
-  **not working yet** (the recognition engine's WebAssembly core isn't bundled).
-  Editing/markup/redaction work; OCR doesn't. ⚠️
+- **`pdf-editor-ocr-full.html`** — editing plus OCR, fully inlined and working
+  offline. Largest file, best OCR accuracy. ✅
 - **`pdf-editor-ocr-fast.html`** — intended for quick OCR, but OCR is **not
   working yet** (none of the OCR engine is bundled). ⚠️
 
