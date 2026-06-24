@@ -1,0 +1,9 @@
+# Vault: the published editor files and their hashes must be byte-for-byte
+# identical on every platform. Treat them as binary so git never converts
+# line endings (CRLF<->LF), which would change their bytes and break the
+# SHA-256 verification the project depends on.
+public/pdf-editor-lean.html      -text
+public/pdf-editor-ocr-fast.html  -text
+public/pdf-editor-ocr-full.html  -text
+public/index.html                -text
+public/SHA256SUMS.txt            -text
