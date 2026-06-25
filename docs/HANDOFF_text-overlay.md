@@ -74,10 +74,10 @@ ae3fb0e465da18c24d6805a126097fbd0a1ac117d5d256294996a37992a5585c  pdf-editor-lea
 ```powershell
 # 1. Drop the new file in
 Copy-Item "$HOME\Downloads\pdf-editor-lean.html" `
-  "C:\Users\Maurice\dev\vault-clean\public\pdf-editor-lean.html" -Force
+  "C:\Users\Maurice\dev\airlock-clean\public\pdf-editor-lean.html" -Force
 
 # 2. Test over http (NOT file://)
-cd C:\Users\Maurice\dev\vault-clean
+cd C:\Users\Maurice\dev\airlock-clean
 npm run dev            # http://localhost:8787 — add text, size/move/wrap, Save, check the PDF
 
 # 3. Offline proof: with dev server up, disconnect Wi-Fi and repeat
